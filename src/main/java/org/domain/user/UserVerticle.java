@@ -19,8 +19,8 @@ import java.util.Map;
 
 import static org.apache.commons.lang3.StringUtils.deleteWhitespace;
 
-public class UserRegistrationVerticle extends AbstractVerticle {
-    private static final Logger log = LoggerFactory.getLogger(UserRegistrationVerticle.class);
+public class UserVerticle extends AbstractVerticle {
+    private static final Logger log = LoggerFactory.getLogger(UserVerticle.class);
     public static final int HTTP_PORT = 9090;
     public static final String SAMPLE_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJyb2xlIjoiU3R1ZGVudCJ9.IxBkuQHrrwJrc8_IA5DPdGhBKx43iYsricXKXUQt_8o";
     public static final int HTTP_NO_CONTENT_CODE = 204;
@@ -71,7 +71,7 @@ public class UserRegistrationVerticle extends AbstractVerticle {
                 userCredentials.setPassword(encrypt(userCredentials.password()));
                 userRepository.save(userCredentials, saveResult -> {
                     if (handler.succeeded()) {
-                        responseHandle(context, HTTP_NO_CONTENT_CODE, "");
+                        responseHandle(context, HTTP_NO_CONTENT_CODE, "Registering successfull");
                     } else {
                         handleFail(context, handler.cause());
                     }
