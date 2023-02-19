@@ -1,2 +1,4 @@
-@io.vertx.codegen.annotations.ModuleGen(name = "user-repo", groupPackage = "org.domain")
+@ModuleGen(name = "user-repo", groupPackage = "org.domain")
 package org.domain;
+
+import io.vertx.codegen.annotations.ModuleGen;

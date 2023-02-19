@@ -30,6 +30,18 @@ public class Item {
         );
     }
 
+    public UUID id() {
+        return id;
+    }
+
+    public UUID owner() {
+        return owner;
+    }
+
+    public String name() {
+        return name;
+    }
+
     public JsonObject toJson() {
         return new JsonObject()
                 .put("_id", id.toString())

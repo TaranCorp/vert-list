@@ -34,10 +34,11 @@ public class ItemRepositoryImpl implements ItemRepository {
         mongoClient.find(Item.TABLE_NAME, new JsonObject().put("owner", id), request -> {
            if (request.succeeded()) {
                resultHandler.handle(Future.succeededFuture(
-                   request.result().stream()
-                           .map(Item::new)
-                           .toList()
-               ));
+                       request.result().stream()
+                               .map(Item::new)
+                               .toList()
+                       )
+               );
            } else {
                resultHandler.handle(Future.failedFuture(request.cause()));
            }

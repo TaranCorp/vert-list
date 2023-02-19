@@ -5,10 +5,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.authentication.TokenCredentials;
-import io.vertx.ext.auth.impl.hash.SHA256;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import org.domain.user.User;
@@ -22,7 +20,7 @@ public class AuthServiceImpl implements AuthService {
         jwtAuthOptions = new JWTAuthOptions()
                 .addPubSecKey(new PubSecKeyOptions()
                         .setAlgorithm("HS256")
-                        .setBuffer("keyboard cat"));
+                        .setBuffer("keyboard cat")); // todo
         jwtAuth = JWTAuth.create(vertx, jwtAuthOptions);
     }
 
@@ -36,6 +34,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public void authenticate(String token, Handler<AsyncResult<io.vertx.ext.auth.User>> resultHandler) {
+        if (token == null) {
+            resultHandler.handle(Future.failedFuture(new IllegalArgumentException("Missing bearer token")));
+            return;
+        }
         final String clearToken = token.contains("Bearer") ? token.substring(7) : token;
         jwtAuth.authenticate(new TokenCredentials(clearToken), request -> {
             if (request.succeeded()) {

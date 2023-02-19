@@ -53,14 +53,14 @@ public class ItemVerticle extends AbstractVerticle {
                         responseHandle(
                                 context,
                                 HTTP_OK_CODE,
-                                Json.encode(itemRequest.result().stream().map(Item::toResponseJson).toList())
+                                Json.encode(itemRequest.result().stream().map(ItemResponse::create).toList())
                         );
                     } else {
                         failureHandler(context);
                     }
                 });
             } else {
-                failureHandler(context);
+                unauthorizedHandler(context);
             }
         });
     }
@@ -106,9 +106,13 @@ public class ItemVerticle extends AbstractVerticle {
     }
 
     private void failureHandler(RoutingContext context) {
-        context.response()
-                .setStatusCode(HTTP_INTERNAL_SERVER_ERROR_CODE)
-                .end(context.failure().getMessage());
+        Throwable failure = context.failure();
+        if (failure != null) {
+            context.response()
+                    .setStatusCode(HTTP_INTERNAL_SERVER_ERROR_CODE)
+                    .end(failure.getMessage());
+        }
+        context.response().setStatusCode(HTTP_INTERNAL_SERVER_ERROR_CODE).end();
     }
 
     private JsonObject mongoDbConfig() {
