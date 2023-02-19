@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class UserCredentials {
     private String login;
+
     private String password;
 
     public UserCredentials(String login, String password) {
@@ -29,6 +30,10 @@ public class UserCredentials {
 
     public String password() {
         return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public JsonObject toJson() {
