@@ -25,10 +25,8 @@ public class UserRepositoryImpl implements UserRepository {
             new User(UUID.randomUUID(), credentials.login(), credentials.password()).toJson(),
             result -> {
                 if (result.succeeded()) {
-                    System.out.println(result.result());
                     resultHandler.handle(Future.succeededFuture());
                 } else {
-                    System.out.println(result.cause().getMessage());
                     resultHandler.handle(Future.failedFuture(result.cause()));
                 }
             });
