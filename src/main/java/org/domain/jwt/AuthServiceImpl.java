@@ -35,10 +35,13 @@ public class AuthServiceImpl implements AuthService {
 
     public void authenticate(String token, Handler<AsyncResult<io.vertx.ext.auth.User>> resultHandler) {
         if (token == null) {
-            resultHandler.handle(Future.failedFuture(new IllegalArgumentException("Missing bearer token")));
+            resultHandler.handle(Future.failedFuture(new IllegalArgumentException("Missing authorization header")));
             return;
         }
-        final String clearToken = token.contains("Bearer") ? token.substring(7) : token;
+        if (!token.contains("Bearer")) {
+            resultHandler.handle(Future.failedFuture(new IllegalArgumentException("Missing bearer token")));
+        }
+        final String clearToken = token.substring(7);
         jwtAuth.authenticate(new TokenCredentials(clearToken), request -> {
             if (request.succeeded()) {
                 resultHandler.handle(Future.succeededFuture(request.result()));
