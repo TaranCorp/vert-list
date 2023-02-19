@@ -9,7 +9,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.domain.jwt.AuthService;
-import org.domain.user.UserRepository;
 
 import java.util.UUID;
 
@@ -24,14 +23,12 @@ public class ItemVerticle extends AbstractVerticle {
 
     protected static final int HTTP_UNAUTHORIZED_CODE = 401;
 
-    private UserRepository userRepository;
     private ItemRepository itemRepository;
     private AuthService authService;
 
     @Override
     public void start(Promise<Void> startPromise) {
         final MongoClient mongoClient = MongoClient.createShared(vertx, mongoDbConfig());
-        userRepository = UserRepository.create(vertx, mongoClient);
         itemRepository = ItemRepository.create(vertx, mongoClient);
         authService = AuthService.create(vertx);
 
@@ -50,17 +47,21 @@ public class ItemVerticle extends AbstractVerticle {
 
     private void getItems(RoutingContext context) {
         authService.authenticate(context.request().getHeader("Authorization"), request -> {
-            itemRepository.findAllByUserId(request.result().get("user_id"), itemRequest -> {
-                if (itemRequest.succeeded()) {
-                    responseHandle(
-                            context,
-                            HTTP_OK_CODE,
-                            Json.encode(itemRequest.result().stream().map(Item::toResponseJson).toList())
-                    );
-                } else {
-                    failureHandler(context);
-                }
-            });
+            if (request.succeeded()) {
+                itemRepository.findAllByUserId(request.result().get("user_id"), itemRequest -> {
+                    if (itemRequest.succeeded()) {
+                        responseHandle(
+                                context,
+                                HTTP_OK_CODE,
+                                Json.encode(itemRequest.result().stream().map(Item::toResponseJson).toList())
+                        );
+                    } else {
+                        failureHandler(context);
+                    }
+                });
+            } else {
+                failureHandler(context);
+            }
         });
     }
 
