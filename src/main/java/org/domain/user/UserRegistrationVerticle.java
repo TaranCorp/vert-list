@@ -28,15 +28,16 @@ public class UserRegistrationVerticle extends AbstractVerticle {
     public static final int HTTP_OK_CODE = 200;
     public static final int HTTP_BAD_REQUEST_CODE = 400;
     public static final String HTTP_MEDIA_JSON_TYPE = "application/json";
-    protected static final int HTTP_INTERNAL_SERVER_ERROR_CODE = 500;
-    protected static final int REQUIRED_PASSWORD_LENGTH = 8;
-    protected static final String EMAIL_REGEX = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+    public static final int HTTP_INTERNAL_SERVER_ERROR_CODE = 500;
+    public static final int REQUIRED_PASSWORD_LENGTH = 8;
+    public static final String EMAIL_REGEX = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+    public static final String MONGO_CONNECTION_URL = "mongodb://localhost:27017";
 
     private UserRepository userRepository;
 
     @Override
     public void start(Promise<Void> startPromise) {
-        userRepository = UserRepository.create(vertx, MongoClient.createShared(vertx, mongoDbConfig()));
+        userRepository = UserRepository.create(vertx, MongoClient.createShared(vertx, mongoDbConfig())); // TODO should delegate mongo creation to another verticle
 
         final Router router = Router.router(vertx);
         router.route("/*")
@@ -44,14 +45,12 @@ public class UserRegistrationVerticle extends AbstractVerticle {
                 .consumes(HTTP_MEDIA_JSON_TYPE);
 
         router.post("/login").handler(this::login).produces(HTTP_MEDIA_JSON_TYPE).failureHandler(this::failureHandler);
-        router.post("/register").handler(this::register).failureHandler(this::failureHandler);
+        router.post("/register").handler(this::register).produces(HTTP_MEDIA_JSON_TYPE).failureHandler(this::failureHandler);
 
         vertx.createHttpServer()
                 .requestHandler(router)
                 .listen(HTTP_PORT)
-                .onSuccess(server -> {
-                    log.info("Server started on port: {}", server.actualPort());
-                });
+                .onSuccess(server -> log.info("Server started on port: {}", server.actualPort()));
     }
 
     private void failureHandler(RoutingContext context) {
@@ -72,7 +71,7 @@ public class UserRegistrationVerticle extends AbstractVerticle {
                 userCredentials.setPassword(encrypt(userCredentials.password()));
                 userRepository.save(userCredentials, saveResult -> {
                     if (handler.succeeded()) {
-                        responseHandle(context, HTTP_NO_CONTENT_CODE, "Registering successfully");
+                        responseHandle(context, HTTP_NO_CONTENT_CODE, "");
                     } else {
                         handleFail(context, handler.cause());
                     }
@@ -148,7 +147,7 @@ public class UserRegistrationVerticle extends AbstractVerticle {
     }
 
     private JsonObject mongoDbConfig() {
-        return new JsonObject().put("connection_string", "mongodb://localhost:27017");
+        return new JsonObject().put("connection_string", MONGO_CONNECTION_URL);
     }
 
     private String encrypt(String password) {
