@@ -14,7 +14,7 @@ public interface ItemRepository {
         return new ItemRepositoryImpl(vertx, mongoClient);
     }
 
-    void save(String name, Handler<AsyncResult<Void>> resultHandler);
+    void save(Item item, Handler<AsyncResult<Void>> resultHandler);
 
     void findAllByUserId(String id, Handler<AsyncResult<List<Item>>> resultHandler);
 }

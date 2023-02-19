@@ -19,8 +19,8 @@ public class ItemRepositoryImpl implements ItemRepository {
     }
 
     @Override
-    public void save(String name, Handler<AsyncResult<Void>> resultHandler) {
-        mongoClient.save(Item.TABLE_NAME, new Item(UUID.randomUUID(), UUID.randomUUID(), name).toJson(), request -> {
+    public void save(Item item, Handler<AsyncResult<Void>> resultHandler) {
+        mongoClient.save(Item.TABLE_NAME, item.toJson(), request -> {
            if (request.succeeded()) {
                resultHandler.handle(Future.succeededFuture());
            } else {

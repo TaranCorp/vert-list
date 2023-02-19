@@ -8,6 +8,7 @@ import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.domain.jwt.AuthService;
 import org.domain.user.UserRepository;
 
 import java.util.UUID;
@@ -25,12 +26,14 @@ public class ItemVerticle extends AbstractVerticle {
 
     private UserRepository userRepository;
     private ItemRepository itemRepository;
+    private AuthService authService;
 
     @Override
     public void start(Promise<Void> startPromise) {
         final MongoClient mongoClient = MongoClient.createShared(vertx, mongoDbConfig());
         userRepository = UserRepository.create(vertx, mongoClient);
         itemRepository = ItemRepository.create(vertx, mongoClient);
+        authService = AuthService.create(vertx);
 
         final Router securedRouter = Router.router(vertx);
         securedRouter.route("/*")
@@ -46,16 +49,18 @@ public class ItemVerticle extends AbstractVerticle {
     }
 
     private void getItems(RoutingContext context) {
-        itemRepository.findAllByUserId(UUID.randomUUID().toString(), request -> {
-            if (request.succeeded()) {
-                responseHandle(
-                        context,
-                        HTTP_OK_CODE,
-                        Json.encode(request.result().stream().map(Item::toResponseJson).toList())
-                );
-            } else {
-                failureHandler(context);
-            }
+        authService.authenticate(context.request().getHeader("Authorization"), request -> {
+            itemRepository.findAllByUserId(request.result().get("user_id"), itemRequest -> {
+                if (itemRequest.succeeded()) {
+                    responseHandle(
+                            context,
+                            HTTP_OK_CODE,
+                            Json.encode(itemRequest.result().stream().map(Item::toResponseJson).toList())
+                    );
+                } else {
+                    failureHandler(context);
+                }
+            });
         });
     }
 
@@ -74,13 +79,23 @@ public class ItemVerticle extends AbstractVerticle {
             return;
         }
 
-        itemRepository.save(name, request -> {
+        authService.authenticate(context.request().getHeader("Authorization"), request -> {
             if (request.succeeded()) {
-                responseHandle(context, HTTP_NO_CONTENT_CODE, "Item created successfull");
+                itemRepository.save(new Item(UUID.randomUUID(), UUID.fromString(request.result().get("user_id")), name), itemRequest -> {
+                    if (itemRequest.succeeded()) {
+                        responseHandle(context, HTTP_NO_CONTENT_CODE, "Item created successfull");
+                    } else {
+                        failureHandler(context);
+                    }
+                });
             } else {
-                failureHandler(context);
+                unauthorizedHandler(context);
             }
         });
+    }
+
+    private void unauthorizedHandler(RoutingContext context) {
+        responseHandle(context, HTTP_UNAUTHORIZED_CODE, "You have not provided an authentication token, the one provided has expired, was revoked or is not authentic");
     }
 
     private void responseHandle(RoutingContext context, int code, String msg) {
