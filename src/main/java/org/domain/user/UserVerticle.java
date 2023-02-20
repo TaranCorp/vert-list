@@ -18,21 +18,19 @@ import static org.domain.user.UserRouteHandler.HTTP_MEDIA_JSON_TYPE;
 
 public class UserVerticle extends AbstractVerticle {
     private static final Logger log = LoggerFactory.getLogger(UserVerticle.class);
-    public static final int HTTP_PORT = 3000;
 
     @Override
     public void start(Promise<Void> startPromise) {
-        ConfigRetriever configRetriever = ConfigRetriever.create(vertx,
+        final ConfigRetriever configRetriever = ConfigRetriever.create(vertx,
                 new ConfigRetrieverOptions()
                         .addStore(new ConfigStoreOptions()
                                 .setType("file")
                                 .setConfig(new JsonObject().put("path", "application.json"))
                         )
         );
-        Future<JsonObject> config = configRetriever.getConfig();
-
+        final Future<JsonObject> config = configRetriever.getConfig();
         config.onSuccess(request -> {
-            JsonObject datasource = request.getJsonObject("datasource");
+            final JsonObject datasource = request.getJsonObject("datasource");
             final JsonObject dbConfig = new JsonObject();
             dbConfig.put("host", datasource.getString("host"));
             dbConfig.put("port", datasource.getInteger("port"));
@@ -46,12 +44,12 @@ public class UserVerticle extends AbstractVerticle {
 
             new UserRouteHandler().configUserRouter(vertx, mongoClient, router);
             final Router configuredRouter = new ItemRouteHandler().configUserRouter(vertx, mongoClient, router);
-
+            final Integer port = request.getInteger("port");
             vertx.createHttpServer()
                     .requestHandler(configuredRouter)
-                    .listen(HTTP_PORT, result -> {
+                    .listen(port, result -> {
                         if (result.succeeded()) {
-                            log.info("Server started on port: {}", HTTP_PORT);
+                            log.info("Server started on port: {}", port);
                             startPromise.complete();
                         } else {
                             log.info("Something went wrong during http server initialization");
