@@ -1,7 +1,6 @@
 package org.domain.item;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
@@ -12,37 +11,27 @@ import org.domain.jwt.AuthService;
 
 import java.util.UUID;
 
-import static org.domain.user.UserVerticle.HTTP_BAD_REQUEST_CODE;
-import static org.domain.user.UserVerticle.HTTP_INTERNAL_SERVER_ERROR_CODE;
-import static org.domain.user.UserVerticle.HTTP_MEDIA_JSON_TYPE;
-import static org.domain.user.UserVerticle.HTTP_NO_CONTENT_CODE;
-import static org.domain.user.UserVerticle.HTTP_OK_CODE;
-import static org.domain.user.UserVerticle.MONGO_CONNECTION_URL;
+import static org.domain.user.UserRouteHandler.HTTP_BAD_REQUEST_CODE;
+import static org.domain.user.UserRouteHandler.HTTP_INTERNAL_SERVER_ERROR_CODE;
+import static org.domain.user.UserRouteHandler.HTTP_MEDIA_JSON_TYPE;
+import static org.domain.user.UserRouteHandler.HTTP_NO_CONTENT_CODE;
+import static org.domain.user.UserRouteHandler.HTTP_OK_CODE;
 
-public class ItemVerticle extends AbstractVerticle {
+public class ItemRouteHandler {
 
     protected static final int HTTP_UNAUTHORIZED_CODE = 401;
 
     private ItemRepository itemRepository;
     private AuthService authService;
 
-    @Override
-    public void start(Promise<Void> startPromise) {
-        final MongoClient mongoClient = MongoClient.createShared(vertx, mongoDbConfig());
+    public Router configUserRouter(Vertx vertx, MongoClient mongoClient, Router router) {
         itemRepository = ItemRepository.create(vertx, mongoClient);
         authService = AuthService.create(vertx);
 
-        final Router securedRouter = Router.router(vertx);
-        securedRouter.route("/*")
-                .handler(BodyHandler.create())
-                .consumes(HTTP_MEDIA_JSON_TYPE);
+        router.post("/items").handler(this::createItem);
+        router.get("/items").handler(this::getItems).produces(HTTP_MEDIA_JSON_TYPE);
 
-        securedRouter.post("/items").handler(this::createItem);
-        securedRouter.get("/items").handler(this::getItems).produces(HTTP_MEDIA_JSON_TYPE);
-
-        vertx.createHttpServer()
-                .requestHandler(securedRouter)
-                .listen(9091);
+        return router;
     }
 
     private void getItems(RoutingContext context) {
@@ -113,9 +102,5 @@ public class ItemVerticle extends AbstractVerticle {
                     .end(failure.getMessage());
         }
         context.response().setStatusCode(HTTP_INTERNAL_SERVER_ERROR_CODE).end();
-    }
-
-    private JsonObject mongoDbConfig() {
-        return new JsonObject().put("connection_string", MONGO_CONNECTION_URL);
     }
 }
