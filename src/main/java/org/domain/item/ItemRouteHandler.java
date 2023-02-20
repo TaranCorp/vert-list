@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
 import org.domain.jwt.AuthService;
 
 import java.util.UUID;
@@ -16,10 +15,9 @@ import static org.domain.user.UserRouteHandler.HTTP_INTERNAL_SERVER_ERROR_CODE;
 import static org.domain.user.UserRouteHandler.HTTP_MEDIA_JSON_TYPE;
 import static org.domain.user.UserRouteHandler.HTTP_NO_CONTENT_CODE;
 import static org.domain.user.UserRouteHandler.HTTP_OK_CODE;
+import static org.domain.user.UserRouteHandler.HTTP_UNAUTHORIZED_CODE;
 
 public class ItemRouteHandler {
-
-    protected static final int HTTP_UNAUTHORIZED_CODE = 401;
 
     private ItemRepository itemRepository;
     private AuthService authService;

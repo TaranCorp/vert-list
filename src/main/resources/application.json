@@ -3,5 +3,10 @@
     "host": "localhost",
     "port": 27017
   },
-  "port": 3000
+  "port": 3000,
+  "jwt": {
+    "private_key": "MIICWwIBAAKBgG1nrtT5LtRf0z34OuyoyK2+1N4g4JXHQSlOdZyTjVduUo/ICJ5FAm62R2AED0pAGBM491HaWglBMNkBxPX7KphtagT7yhViu8tlgmGK+hJGNDTA8cjbkToHAA+E2MFIdyupOEU/gf6RI473J1qGm/z2QF6eyMw39XVHcU/p0zELAgMBAAECgYAflSnUU2bgahVKM2mXPhZIielbgnQy6MV3zi2HmNTZo4Bz/1P1lIhiO36ZSjK7xYrtqalD2NvbBhW635bjR7GA1JNBLQRzqbKw7LcU1IuyxFoJgCGWTj0CtltRQDGSCRNMg6udqYtSvUrnhKJ7MmQKy1HRt7qxTjrBSNOUU8WRKQJBAKwwVmmtxZ1UTvUJXDw7lpS6POU2b8NAL7vixXCa6kOHmPXDdmCOVMR8IN7jK/aPEeQwWMln5x2h7Dou",
+    "expiry": 60,
+    "algorithm": "HS256"
+  }
 }

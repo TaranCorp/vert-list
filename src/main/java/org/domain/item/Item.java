@@ -48,10 +48,4 @@ public class Item {
                 .put("owner", owner.toString())
                 .put("name", name);
     }
-
-    public JsonObject toResponseJson() {
-        return new JsonObject()
-                .put("id", id.toString())
-                .put("title", name);
-    }
 }
