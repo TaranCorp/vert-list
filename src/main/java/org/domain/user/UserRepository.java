@@ -13,6 +13,10 @@ public interface UserRepository {
         return new UserRepositoryImpl(vertx, mongoClient);
     }
 
+    static UserRepository createProxy(Vertx vertx, String address) {
+        return new UserRepositoryVertxEBProxy(vertx, address);
+    }
+
     void save(UserCredentials user, Handler<AsyncResult<Void>> resultHandler);
 
     void findByLogin(String login, Handler<AsyncResult<User>> resultHandler);

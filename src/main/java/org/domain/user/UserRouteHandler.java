@@ -5,11 +5,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.HashString;
 import io.vertx.ext.auth.impl.hash.SHA256;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.domain.db.MongoVerticle;
 import org.domain.jwt.AuthService;
 
 import java.util.Locale;
@@ -31,8 +31,8 @@ public class UserRouteHandler {
     private UserRepository userRepository;
     private AuthService authService;
 
-    public Router configUserRouter(Vertx vertx, MongoClient mongoClient, Router router) {
-        userRepository = UserRepository.create(vertx, mongoClient);
+    public Router configUserRouter(Vertx vertx, Router router) {
+        userRepository = UserRepository.createProxy(vertx, MongoVerticle.USER_REPOSITORY_ADDRESS);
         authService = AuthService.create(vertx);
 
         router.route("/*")

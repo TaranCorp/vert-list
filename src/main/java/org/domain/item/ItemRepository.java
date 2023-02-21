@@ -14,6 +14,10 @@ public interface ItemRepository {
         return new ItemRepositoryImpl(vertx, mongoClient);
     }
 
+    static ItemRepository createProxy(Vertx vertx, String address) {
+        return new ItemRepositoryVertxEBProxy(vertx, address);
+    }
+
     void save(Item item, Handler<AsyncResult<Void>> resultHandler);
 
     void findAllByUserId(String id, Handler<AsyncResult<List<Item>>> resultHandler);

@@ -1,13 +1,7 @@
 package org.domain.user;
 
-import io.vertx.config.ConfigRetriever;
-import io.vertx.config.ConfigRetrieverOptions;
-import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.domain.item.ItemRouteHandler;
@@ -21,42 +15,26 @@ public class UserVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
-        final ConfigRetriever configRetriever = ConfigRetriever.create(vertx,
-                new ConfigRetrieverOptions()
-                        .addStore(new ConfigStoreOptions()
-                                .setType("file")
-                                .setConfig(new JsonObject().put("path", "application.json"))
-                        )
-        );
-        final Future<JsonObject> config = configRetriever.getConfig();
-        config.onSuccess(request -> {
-            final JsonObject datasource = request.getJsonObject("datasource");
-            final JsonObject dbConfig = new JsonObject();
-            dbConfig.put("host", datasource.getString("host"));
-            dbConfig.put("port", datasource.getInteger("port"));
+        final Router router = Router.router(vertx);
+        router.route("/*")
+                .handler(BodyHandler.create())
+                .consumes(HTTP_MEDIA_JSON_TYPE);
 
-            final MongoClient mongoClient = MongoClient.createShared(vertx, dbConfig);
-
-            final Router router = Router.router(vertx);
-            router.route("/*")
-                    .handler(BodyHandler.create())
-                    .consumes(HTTP_MEDIA_JSON_TYPE);
-
-            new UserRouteHandler().configUserRouter(vertx, mongoClient, router);
-            final Router configuredRouter = new ItemRouteHandler().configUserRouter(vertx, mongoClient, router);
-            final Integer port = request.getInteger("port");
-            vertx.createHttpServer()
-                    .requestHandler(configuredRouter)
-                    .listen(port, result -> {
-                        if (result.succeeded()) {
-                            log.info("Server started on port: {}", port);
-                            startPromise.complete();
-                        } else {
-                            log.info("Something went wrong during http server initialization");
-                            startPromise.fail(result.cause());
-                        }
-                    });
-        })
-        .onFailure(startPromise::fail);
+        new UserRouteHandler().configUserRouter(vertx, router);
+        final Router configuredRouter = new ItemRouteHandler().configUserRouter(vertx, router);
+        final Integer port = 3000;
+        vertx.createHttpServer()
+                .requestHandler(configuredRouter)
+                .listen(port, result -> {
+                    if (result.succeeded()) {
+                        System.out.println("Available routes: ");
+                        router.getRoutes().stream().peek(route -> System.out.println(route.methods() + " - " + route.getPath())).toList();
+                        log.info("Server started on port: {}", port);
+                        startPromise.complete();
+                    } else {
+                        log.info("Something went wrong during http server initialization");
+                        startPromise.fail(result.cause());
+                    }
+                });
     }
 }

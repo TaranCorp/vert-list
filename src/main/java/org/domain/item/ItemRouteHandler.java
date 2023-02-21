@@ -3,9 +3,9 @@ package org.domain.item;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.domain.db.MongoVerticle;
 import org.domain.jwt.AuthService;
 
 import java.util.UUID;
@@ -22,8 +22,8 @@ public class ItemRouteHandler {
     private ItemRepository itemRepository;
     private AuthService authService;
 
-    public Router configUserRouter(Vertx vertx, MongoClient mongoClient, Router router) {
-        itemRepository = ItemRepository.create(vertx, mongoClient);
+    public Router configUserRouter(Vertx vertx, Router router) {
+        itemRepository = ItemRepository.createProxy(vertx, MongoVerticle.ITEM_REPOSITORY_ADDRESS);
         authService = AuthService.create(vertx);
 
         router.post("/items").handler(this::createItem);
