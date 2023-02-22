@@ -13,12 +13,15 @@ import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.domain.db.MongoVerticle;
 import org.domain.user.User;
+import org.domain.user.UserRepository;
 
 public class AuthServiceImpl implements AuthService {
 
     private JWTAuthOptions jwtAuthOptions;
     private JWTAuth jwtAuth;
+    private UserRepository userRepository;
 
     public AuthServiceImpl(Vertx vertx) {
         final ConfigRetriever configRetriever = ConfigRetriever.create(vertx,
@@ -43,15 +46,23 @@ public class AuthServiceImpl implements AuthService {
         }).onFailure(error -> {
             throw new IllegalStateException("JWT configuration not provided, Error: " + error.getMessage());
         });
+
+        userRepository = UserRepository.createProxy(vertx, MongoVerticle.USER_REPOSITORY_ADDRESS);
     }
 
     public void generateToken(User user, Handler<AsyncResult<String>> resultHandler) {
-            resultHandler.handle(Future.succeededFuture("Bearer " + jwtAuth.generateToken(
-                    new JsonObject()
-                            .put("login", user.login())
-                            .put("user_id", user.id().toString())
-                    )
-            ));
+        userRepository.findByLogin(user.login(), request -> {
+            if (request.result() != null) {
+                resultHandler.handle(Future.succeededFuture("Bearer " + jwtAuth.generateToken(
+                                new JsonObject()
+                                        .put("login", user.login())
+                                        .put("user_id", user.id().toString())
+                        )
+                ));
+            } else {
+                resultHandler.handle(Future.failedFuture(request.cause()));
+            }
+        });
     }
 
     public void authenticate(String token, Handler<AsyncResult<io.vertx.ext.auth.User>> resultHandler) {
@@ -60,9 +71,16 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
         final String clearToken = token.substring(7);
-        jwtAuth.authenticate(new TokenCredentials(clearToken), request -> {
+            jwtAuth.authenticate(new TokenCredentials(clearToken), request -> {
             if (request.succeeded()) {
-                resultHandler.handle(Future.succeededFuture(request.result()));
+                userRepository.findByLogin(request.result().get("login"), userRequest -> {
+                    if (userRequest.result() != null) {
+                        resultHandler.handle(Future.succeededFuture(request.result()));
+                    } else {
+                        resultHandler.handle(Future.failedFuture(request.cause()));
+                    }
+                });
+
             } else {
                 resultHandler.handle(Future.failedFuture(request.cause()));
             }
