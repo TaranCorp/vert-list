@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -31,6 +32,11 @@ public class UserTests {
         vertx.deployVerticle(new UserVerticle(), testContext.succeeding(userVerticleId -> {
             testContext.completeNow();
         }));
+    }
+
+    @AfterAll
+    static void cleanUp(Vertx vertx, VertxTestContext testContext) {
+        vertx.close(testContext.succeedingThenComplete());
     }
 
     @Test
